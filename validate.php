@@ -59,10 +59,27 @@
 	exit;	 
  }
  $sessiondata = array();
- $query = "SELECT * FROM imas_sessions WHERE sessionid='$sessionid'";
- $result = mysql_query($query) or die("Query failed : " . mysql_error());
- if (mysql_num_rows($result)>0) {
- 	 $line = mysql_fetch_assoc($result);
+
+// DEBUG PDO SELECT#01 ----------------------------------------------------------
+
+ // $query = "SELECT * FROM imas_sessions WHERE sessionid='$sessionid'";
+ // $result = mysql_query($query) or die("Query failed : " . mysql_error());
+ // if (mysql_num_rows($result)>0) {
+ //	 $line = mysql_fetch_assoc($result);
+
+ $STM = $DBH->prepare("SELECT * FROM imas_sessions WHERE sessionid=?");
+// PDO strip
+ $PDOParam = stripslashes($sessionid);
+ $STM->execute(array($PDOParam)) or die("Query failed : " . $DBH->errorInfo());
+ $line = $STM->fetch(PDO::FETCH_ASSOC);
+
+// require("DebugPDO/DebugPDO.php");
+// PDOdumpArrayAsTable($line);
+
+ if ($line) {
+
+// ------------------------------------------------------------------------------
+
  	 $userid = $line['userid'];
  	 $tzoffset = $line['tzoffset'];
  	 $tzname = '';
@@ -76,8 +93,17 @@
 		 $sessiondata = unserialize(base64_decode($enc));
 		 //delete own session if old and not posting
 		 if ((time()-$line['time'])>24*60*60 && (!isset($_POST) || count($_POST)==0)) {
-			$query = "DELETE FROM imas_sessions WHERE userid='$userid'";
-			mysql_query($query) or die("Query failed : " . mysql_error());
+
+// DEBUG PDO DELETE#01 ----------------------------------------------------------
+
+//			$query = "DELETE FROM imas_sessions WHERE userid='$userid'";
+//			mysql_query($query) or die("Query failed : " . mysql_error());
+
+                       $STM = $DBH->prepare("DELETE FROM imas_sessions WHERE userid=?");
+                       $STM->execute(array($userid)) or die("Query failed : " . $DBH->errorInfo());
+
+// ------------------------------------------------------------------------------
+
 			unset($userid);
 		 }
 	 } else {
@@ -96,8 +122,16 @@
 				 setcookie('mathgraphprefs',$_POST['mathdisp'].'-'.$_POST['graphdisp'],2000000000);
 			 }
 			 $enc = base64_encode(serialize($sessiondata));
-			 $query = "UPDATE imas_sessions SET sessiondata='$enc' WHERE sessionid='$sessionid'";
-			 mysql_query($query) or die("Query failed : " . mysql_error());
+
+// DEBUG PDO UPDATE#01 ----------------------------------------------------------
+
+			 // $query = "UPDATE imas_sessions SET sessiondata='$enc' WHERE sessionid='$sessionid'";
+			 // mysql_query($query) or die("Query failed : " . mysql_error());
+
+                         $STM = $DBH->prepare("UPDATE imas_sessions SET sessiondata=? WHERE sessionid=?");
+                         $STM->execute(array($enc, $sessionid)) or die("Query failed : " . $DBH->errorInfo());
+ 
+// ------------------------------------------------------------------------------
 			 
 			// $now = time();
 			// $query = "INSERT INTO imas_log (time,log) VALUES ($now,'$userid from IP: {$_SERVER['REMOTE_ADDR']}')";
@@ -195,8 +229,16 @@ END;
 	  //clean up old sessions
 	 $now = time();
 	 $old = $now - 25*60*60;
-	 $query = "DELETE FROM imas_sessions WHERE time<$old";
-	 $result = mysql_query($query) or die("Query failed : " . mysql_error());
+
+// DEBUG PDO DELETE#02 ----------------------------------------------------------
+
+//	 $query = "DELETE FROM imas_sessions WHERE time<$old";
+//	 $result = mysql_query($query) or die("Query failed : " . mysql_error());
+
+         $STM = $DBH->prepare("DELETE FROM imas_sessions WHERE time<?");
+         $STM->execute(array($old)) or die("Query failed : " . $DBH->errorInfo());
+
+// ------------------------------------------------------------------------------
 	 
 	 if (isset($CFG['GEN']['guesttempaccts']) && $_POST['username']=='guest') { // create a temp account when someone logs in w/ username: guest
 	 	$query = 'SELECT ver FROM imas_dbschema WHERE id=2';
@@ -210,10 +252,19 @@ END;
 		} else {
 			$homelayout = '|0,1,2||0,1';
 		}
-	 	$query = "INSERT INTO imas_users (SID,password,rights,FirstName,LastName,email,msgnotify,homelayout) ";
-	 	$query .= "VALUES ('guestacct$guestcnt','',5,'Guest','Account','none@none.com',0,'$homelayout')";
-	 	mysql_query($query) or die("Query failed : " . mysql_error());
-	 	$userid = mysql_insert_id();
+
+// DEBUG PDO INSERT#01 ----------------------------------------------------------
+
+	 	// $query = "INSERT INTO imas_users (SID,password,rights,FirstName,LastName,email,msgnotify,homelayout) ";
+	 	// $query .= "VALUES ('guestacct$guestcnt','',5,'Guest','Account','none@none.com',0,'$homelayout')";
+	 	// mysql_query($query) or die("Query failed : " . mysql_error());
+	 	// $userid = mysql_insert_id();
+
+                $STM = $DBH->prepare("INSERT INTO imas_users (SID,password,rights,FirstName,LastName,email,msgnotify,homelayout) VALUES (?,?,?,?,?, ?,?,?)");
+                $query->execute(array("guestacct" . $guestcnt, '', 5, 'Guest', 'Account', 'none@none.com', 0, $homelayout));
+                $userid = $DBH->lastInsertId();
+
+// ------------------------------------------------------------------------------
 	 	
 		$query = "SELECT id FROM imas_courses WHERE (istemplate&8)=8 AND available<4";
 		if (isset($_GET['cid'])) { $query.= ' AND id='.intval($_GET['cid']); }
@@ -348,6 +399,7 @@ END;
  if ($hasusername) {
 	//check validity, if desired
 	if (($sessiondata['useragent'] != $_SERVER['HTTP_USER_AGENT']) || ($sessiondata['ip'] != $_SERVER['REMOTE_ADDR'])) {
+// DEBUG PDO DELETE#03
 		//suggests sidejacking.  Delete session and require relogin
 		/*
 		$query = "DELETE FROM imas_sessions WHERE userid='$userid'";
