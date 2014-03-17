@@ -29,6 +29,7 @@ function interpret($blockname,$anstype,$str,$countcnt=1)
 }
 
 function getquestionqtext($m) {
+        // SELECT#01
 	$query = "SELECT qtext FROM imas_questionset WHERE id='{$m[2]}'";
 	$result = mysql_query($query) or die("Query failed : " . mysql_error());
 	if (mysql_num_rows($result)==0) {
@@ -573,6 +574,7 @@ function tokenize($str,$anstype,$countcnt) {
 				$connecttolast = 0;
 			} else if ($lastsym[0] == 'importcodefrom' || $lastsym[0] == 'includecodefrom') {
 				$out = intval(substr($out,1,strlen($out)-2));
+                                // SELECT#02
 				$query = "SELECT control,qtype FROM imas_questionset WHERE id='$out'";
 				$result = mysql_query($query) or die("Query failed : " . mysql_error());
 				if (mysql_num_rows($result)==0) {

@@ -39,12 +39,14 @@ function displayq($qnidx,$qidx,$seed,$doshowans,$showhints,$attemptn,$returnqtxt
 	} else {
 		$seqinactive = false;
 	}*/
-	
+
+	// SELECT#01
 	$query = "SELECT qtype,control,qcontrol,qtext,answer,hasimg,extref FROM imas_questionset WHERE id='$qidx'";
 	$result = mysql_query($query) or die("Query failed : " . mysql_error());
 	$qdata = mysql_fetch_array($result, MYSQL_ASSOC);
 	
 	if ($qdata['hasimg']>0) {
+	  // SELECT#02
 		$query = "SELECT var,filename,alttext FROM imas_qimages WHERE qsetid='$qidx'";
 		$result = mysql_query($query) or die("Query failed : " . mysql_error());
 		while ($row = mysql_fetch_row($result)) {
@@ -417,7 +419,8 @@ function displayq($qnidx,$qidx,$seed,$doshowans,$showhints,$attemptn,$returnqtxt
 function scoreq($qnidx,$qidx,$seed,$givenans,$qnpointval=1) {
 	unset($abstolerance);
 	srand($seed);
-	$GLOBALS['inquestiondisplay'] = false;	
+	$GLOBALS['inquestiondisplay'] = false;
+	// SELECT#03
 	$query = "SELECT qtype,control,answer FROM imas_questionset WHERE id='$qidx'";
 	$result = mysql_query($query) or die("Query failed : " . mysql_error());
 	$qdata = mysql_fetch_array($result, MYSQL_ASSOC);

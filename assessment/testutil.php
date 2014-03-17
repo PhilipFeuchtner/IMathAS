@@ -13,7 +13,8 @@ function getquestioninfo($qns,$testsettings) {
 	$qnlist = "'".implode("','",$qns)."'";	
 	if ($testsettings['defoutcome']!=0) {
 		//we'll need to run two simpler queries rather than a single join query
-		$outcomenames = array();
+	  $outcomenames = array();
+	  // SELECT#01
 		$query = "SELECT id,name FROM imas_outcomes WHERE courseid='{$testsettings['courseid']}'";
 		$result = mysql_query($query) or die("Query failed: $query: " . mysql_error());
 		while ($row = mysql_fetch_row($result)) {
@@ -503,6 +504,7 @@ function scorequestion($qn, $rectime=true) {
 		} else {
 			$time = 0;  //for all at once display, where time is not useful info
 		}
+		// INSERT#01
 		$query = "INSERT INTO imas_firstscores (courseid,qsetid,score,scoredet,timespent) VALUES ";
 		$query .= "('".addslashes($testsettings['courseid'])."','".$qi[$questions[$qn]]['questionsetid']."','".round(100*getpts($unitrawscore))."','".$rawscores[$qn]."','$time')";
 		mysql_query($query) or die("Query failed : " . mysql_error());
@@ -558,6 +560,7 @@ function recordtestdata($limit=false) {
 	$reattemptinglist = implode(',',$reattempting);
 	
 	$now = time();
+	// UPDATE#01
 	if ($isreview) {
 		if ($limit) {
 			$query = "UPDATE imas_assessment_sessions SET reviewlastanswers='$lalist' ";
