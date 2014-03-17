@@ -122,15 +122,13 @@
 			 }
 			 $enc = base64_encode(serialize($sessiondata));
 
-// DEBUG PDO UPDATE#01 ----------------------------------------------------------
-
+			 // DEBUG PDO UPDATE#01 ----------------------------------------------------------
 			 // $query = "UPDATE imas_sessions SET sessiondata='$enc' WHERE sessionid='$sessionid'";
 			 // mysql_query($query) or die("Query failed : " . mysql_error());
 
                          $STM = $DBH->prepare("UPDATE imas_sessions SET sessiondata=? WHERE sessionid=?");
                          $STM->execute(array($enc, $sessionid)) or die("Query failed : " . $DBH->errorInfo());
- 
-// ------------------------------------------------------------------------------
+			 // ------------------------------------------------------------------------------
 			 
 			 // $now = time();
 			 // INSERT#08
@@ -256,13 +254,11 @@ END;
 	   // ------------------------------------------------------------------------------
 
 	   // DEBUG PDO UPDATE#02 ----------------------------------------------------------
-	   
 	   //   $query = 'UPDATE imas_dbschema SET ver=ver+1 WHERE id=2';
 	   //	mysql_query($query) or die("Query failed : " . mysql_error());
 
 	   $STM = $DBH->prepare("UPDATE imas_dbschema SET ver=ver+1 WHERE id=2");
 	   $STM->execute() or die("Query failed : " . $DBH->errorInfo());
-	   
 	   // ------------------------------------------------------------------------------
 	   
 		if (isset($CFG['GEN']['homelayout'])) {
@@ -385,10 +381,14 @@ END;
 		 	 $query = "INSERT INTO imas_sessions (sessionid,userid,time,tzoffset,sessiondata) VALUES ('$sessionid','$userid',$now,'{$_POST['tzoffset']}','$enc')";
 		 }
 		 $result = mysql_query($query) or die("Query failed : " . mysql_error());
+	 
+		 // DEBUG PDO UPDATE#03 ----------------------------------------------------------
+		 // $query = "UPDATE imas_users SET lastaccess=$now WHERE id=$userid";
+		 // $result = mysql_query($query) or die("Query failed : " . mysql_error());
 
-		 // UPDATE#03
-		 $query = "UPDATE imas_users SET lastaccess=$now WHERE id=$userid";
-		 $result = mysql_query($query) or die("Query failed : " . mysql_error());
+		 $STM = $DBH->prepare("UPDATE imas_users SET lastaccess=? WHERE id=?");
+		 $STM->execute(array($now, $userid)) or die("Query failed : " . $DBH->errorInfo());
+		 // ------------------------------------------------------------------------------
 		 
 		 if (isset($_SERVER['QUERY_STRING'])) {
 			 $querys = '?'.$_SERVER['QUERY_STRING'].(isset($addtoquerystring)?'&'.$addtoquerystring:'');
@@ -534,9 +534,15 @@ END;
 			} else {
 				$now = time();
 				if (!isset($sessiondata['lastaccess'.$cid])) {
-				  // UPDATE#04
-					$query = "UPDATE imas_students SET lastaccess='$now' WHERE id=$studentid";
-					mysql_query($query) or die("Query failed : " . mysql_error());
+	      
+				  // DEBUG PDO UPDATE#04 ----------------------------------------------------------				  
+				  // $query = "UPDATE imas_students SET lastaccess='$now' WHERE id=$studentid";
+				  // mysql_query($query) or die("Query failed : " . mysql_error());
+				  
+				  $STM = $DBH->prepare("UPDATE imas_students SET lastaccess=? WHERE id=?");
+				  $STM->execute(array($now, $studentid)) or die("Query failed : " . $DBH->errorInfo());			  
+				  // ------------------------------------------------------------------------------
+					
 					$sessiondata['lastaccess'.$cid] = $now;
 					// INSERT#07
 					$query = "INSERT INTO imas_login_log (userid,courseid,logintime) VALUES ($userid,'$cid',$now)";
@@ -544,9 +550,14 @@ END;
 					$sessiondata['loginlog'.$cid] = mysql_insert_id();
 					writesessiondata();
 				} else if (isset($CFG['GEN']['keeplastactionlog'])) {
-				  // UPDATE#05
-					$query = "UPDATE imas_login_log SET lastaction=$now WHERE id=".$sessiondata['loginlog'.$cid];
-					mysql_query($query) or die("Query failed : " . mysql_error());
+				 
+				  // DEBUG PDO UPDATE#05 ----------------------------------------------------------
+				  // $query = "UPDATE imas_login_log SET lastaction=$now WHERE id=".$sessiondata['loginlog'.$cid];
+				  // mysql_query($query) or die("Query failed : " . mysql_error());
+				  
+				  $STM = $DBH->prepare("UPDATE imas_login_log SET lastaction=? WHERE id=?");
+				  $STM->execute(array($now, $sessiondata['loginlog'.$cid])) or die("Query failed : " . $DBH->errorInfo());
+				  // ------------------------------------------------------------------------------			  
 				}
 			}
 		} else {
@@ -666,9 +677,14 @@ END;
   function writesessiondata() {
 	  global $sessiondata,$sessionid;
 	  $enc = base64_encode(serialize($sessiondata));
-	  // UPDATE#06
-	  $query = "UPDATE imas_sessions SET sessiondata='$enc' WHERE sessionid='$sessionid'";
-	  mysql_query($query) or die("Query failed : " . mysql_error());
+	  
+	  // DEBUG PDO UPDATE#06 ----------------------------------------------------------
+	  // $query = "UPDATE imas_sessions SET sessiondata='$enc' WHERE sessionid='$sessionid'";
+	  // mysql_query($query) or die("Query failed : " . mysql_error());
+
+	  $STM = $DBH->prepare("UPDATE imas_sessions SET sessiondata=? WHERE sessionid=?");
+	  $STM->execute(array($enc, $sessionid)) or die("Query failed : " . $DBH->errorInfo());
+	  // ------------------------------------------------------------------------------
   }
   function checkeditorok() {
 	  $ua = $_SERVER['HTTP_USER_AGENT'];
