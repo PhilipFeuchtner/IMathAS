@@ -1,0 +1,154 @@
+#+TODO: TODO IN-PROGRESS WAITING DONE
+
+* TODO prerequrements [2/4]
+  - [ ] Richard info
+  - [ ] Testserver Zugang
+  - [X] David
+  - [X] Git
+    - new brach :: PDO 
+
+* TODO files [4/9]
+** DONE config.php [3/3]
+   CLOCK: [2014-02-23 Sun 17:58]--[2014-02-23 Sun 18:58] =>  1:00
+   - [X] install.php :: changed & tested 
+   - [X] -> config.php :: tested
+   - [X] commit file 
+     
+** IN-PROGRESS validate.php [2/6]
+   CLOCK: [2014-03-10 Mon 20:58]--[2014-03-10 Mon 21:24] =>  0:26
+   CLOCK: [2014-02-24 Mon 13:58]--[2014-02-24 Mon 15:17] =>  1:19
+   CLOCK: [2014-02-23 Sun 18:55]--[2014-02-23 Sun 19:56] =>  1:01
+   - [X] indexed
+   - [-] SELECT [2/10]
+     1. [X] #01
+     2. [ ] #02
+     3. [ ] 
+     4. [ ] 
+     5. [ ] 
+     6. [ ] 
+     7. [ ] 
+     8. [ ] 
+     9. [ ] 
+     10. [X] 
+
+   - [-] INSERT [4/8]
+     1. [X] #01
+     2. [ ] #02
+     3. [ ] #03
+     4. [ ] #04
+     5. [X] #05
+        in comment
+     6. [X] #06
+        in comment
+     7. [ ] #07
+     8. [X] #08
+	in comment
+   - [X] DELETE
+     1. [X] #01 <2014-02-24 Mon>
+     2. [X] #02
+     3. [X] #03 
+  	delete in comment
+   - [-] UPDATE 
+     1. [X] #01
+     2. [X] #02
+     3. [ ] 
+     4. [ ] 
+     5. [X] 
+     6. [ ] 
+
+   - [ ] commit file
+
+** WAITING assessment/showtest.php [1/6]
+   - [X] indexed
+   - [ ] SELECT [0/25]
+     - [ ] 25 Item
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+   - [ ] INSERT [0/11]
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 11 Item
+   - [ ] DELETE [0/2]
+     - [ ] 
+     - [ ] 2 Item
+   - [ ] UPDATE [0/6]
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 
+     - [ ] 6 Item
+   - [ ] commit file
+   
+** TODO assessment/displayq2.php [1/2]
+     - [X] indexed
+     - [ ] SELECT [0/3]
+       1. [ ] 
+       2. [ ] 
+       3. [ ] 
+** TODO assessment/testutil.php [2/6]
+   - [X] indexed
+   - [ ] SELECT [0/3]
+     1. [ ] 
+     2. [ ] 
+     3. [ ] 
+   - [ ] INSERT [0/1]
+     1. [ ] 
+   - [X] DELETE [0/0]
+     - no entries
+   - [ ] UPDATE [0/1]
+     1. [ ] 
+   - [ ] commit file
+
+** DONE assessment/asidutil.php [2/2]
+   - [X] not entries
+   - [X] no includes
+
+** DONE assessment/matphp2.php [2/2]
+   - [X] not entries
+   - [X] no includes
+** TODO assessment/interpret5.php [1/3]
+   - [X] indexed
+   - [ ] SELECT [0/2]
+     1. [ ] 
+     2. [ ] 
+   - [ ] commit file
+
+** DONE assessment/macros.php [2/2]
+   - [X] not entries
+   - [X] no includes
+
+** assessment/ -- associated --
+   
+* TODO misc [1/1]
+  - [X] DebugPDO.php :: PDODumpArrayAsTable
