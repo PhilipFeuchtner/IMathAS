@@ -40,16 +40,32 @@ function displayq($qnidx,$qidx,$seed,$doshowans,$showhints,$attemptn,$returnqtxt
 		$seqinactive = false;
 	}*/
 
-	// SELECT#01
-	$query = "SELECT qtype,control,qcontrol,qtext,answer,hasimg,extref FROM imas_questionset WHERE id='$qidx'";
-	$result = mysql_query($query) or die("Query failed : " . mysql_error());
-	$qdata = mysql_fetch_array($result, MYSQL_ASSOC);
+	// DEBUG PDO SELECT#01 ----------------------------------------------------------
+
+	// $query = "SELECT qtype,control,qcontrol,qtext,answer,hasimg,extref FROM imas_questionset WHERE id='$qidx'";
+	// $result = mysql_query($query) or die("Query failed : " . mysql_error());
+	// $qdata = mysql_fetch_array($result, MYSQL_ASSOC);
+	
+	$STM = $DBH->prepare("SELECT qtype,control,qcontrol,qtext,answer,hasimg,extref FROM imas_questionset WHERE id=?");
+	$PDOParam = stripslashes($qidx); // PDO strip
+	$STM->execute(array($PDOParam)) or die("Query failed : " . $DBH->errorInfo());
+	$qdata = $STM->fetch(PDO::FETCH_ASSOC);
+	// ------------------------------------------------------------------------------
 	
 	if ($qdata['hasimg']>0) {
-	  // SELECT#02
-		$query = "SELECT var,filename,alttext FROM imas_qimages WHERE qsetid='$qidx'";
-		$result = mysql_query($query) or die("Query failed : " . mysql_error());
-		while ($row = mysql_fetch_row($result)) {
+      
+	  // DEBUG PDO SELECT#02 ----------------------------------------------------------
+
+	  // $query = "SELECT var,filename,alttext FROM imas_qimages WHERE qsetid='$qidx'";
+	  // $result = mysql_query($query) or die("Query failed : " . mysql_error());
+	  // while ($row = mysql_fetch_row($result)) {
+
+	  $STM = $DBH->prepare("SELECT var,filename,alttext FROM imas_qimages WHERE qsetid=?");
+	  $PDOParam = stripslashes($qidx); // PDO strip
+	  $STM->execute(array($PDOParam)) or die("Query failed : " . $DBH->errorInfo());
+	  while ($row = $STM->fetch(PDO::FETCH_ASSOC)) {
+	    // ------------------------------------------------------------------------------
+	    
 			if(isset($GLOBALS['CFG']['GEN']['AWSforcoursefiles']) && $GLOBALS['CFG']['GEN']['AWSforcoursefiles'] == true) {
 				${$row[0]} = "<img src=\"{$urlmode}s3.amazonaws.com/{$GLOBALS['AWSbucket']}/qimages/{$row[1]}\" alt=\"".htmlentities($row[2],ENT_QUOTES)."\" />";
 			} else {
@@ -420,11 +436,19 @@ function scoreq($qnidx,$qidx,$seed,$givenans,$qnpointval=1) {
 	unset($abstolerance);
 	srand($seed);
 	$GLOBALS['inquestiondisplay'] = false;
-	// SELECT#03
-	$query = "SELECT qtype,control,answer FROM imas_questionset WHERE id='$qidx'";
-	$result = mysql_query($query) or die("Query failed : " . mysql_error());
-	$qdata = mysql_fetch_array($result, MYSQL_ASSOC);
+       
+	// DEBUG PDO SELECT#03 ----------------------------------------------------------
 
+	// $query = "SELECT qtype,control,answer FROM imas_questionset WHERE id='$qidx'";
+	// $result = mysql_query($query) or die("Query failed : " . mysql_error());
+	// $qdata = mysql_fetch_array($result, MYSQL_ASSOC);
+
+	$STM = $DBH->prepare("SELECT qtype,control,answer FROM imas_questionset WHERE id=?");
+	$PDOParam = stripslashes($qidx); // PDO strip
+	$STM->execute(array($PDOParam)) or die("Query failed : " . $DBH->errorInfo());
+	$qdata = $STM->fetch(PDO::FETCH_ASSOC);
+	// ------------------------------------------------------------------------------
+	    
 	if (isset($GLOBALS['lastanswers'])) {
 		foreach ($GLOBALS['lastanswers'] as $i=>$ar) {
 			$arv = explode('##',$ar);
@@ -4996,10 +5020,21 @@ function scorepart($anstype,$qn,$givenans,$options,$multi) {
 
 
 function getqsetid($questionid) {
-	$query = "SELECT imas_questions.questionsetid,imas_questions.category,imas_libraries.name FROM imas_questions LEFT JOIN imas_libraries ";
-	$query .= "ON imas_questions.category=imas_libraries.id WHERE imas_questions.id='$questionid'";
-	$result = mysql_query($query) or die("Query failed : " . mysql_error());
-	$row = mysql_fetch_row($result);
+  // DEBUG PDO SELECT#04 ----------------------------------------------------------
+
+  // $query = "SELECT imas_questions.questionsetid,imas_questions.category,imas_libraries.name FROM imas_questions LEFT JOIN imas_libraries ";
+  // $query .= "ON imas_questions.category=imas_libraries.id WHERE imas_questions.id='$questionid'";
+  // $result = mysql_query($query) or die("Query failed : " . mysql_error());
+  // $row = mysql_fetch_row($result);
+
+  $query = "SELECT imas_questions.questionsetid,imas_questions.category,imas_libraries.name FROM imas_questions LEFT JOIN imas_libraries ";
+  $query .= "ON imas_questions.category=imas_libraries.id WHERE imas_questions.id=?";
+  $STM = $DBH->prepare(query);
+  $PDOParam = stripslashes($questionid); // PDO strip
+  $STM->execute(array($PDOParam)) or die("Query failed : " . $DBH->errorInfo());
+  $line = $STM->fetch(PDO::FETCH_NUM);
+  // ------------------------------------------------------------------------------
+	
 	if ($row[2]==null) {
 		return (array($row[0],$row[1]));
 	} else {
@@ -5012,11 +5047,24 @@ function getallqsetid($questions) {
 	$qids = "'".implode("','",$questions)."'";
 	$order = array_flip($questions);
 	$out = array();
+	// DEBUG PDO SELECT#05 ----------------------------------------------------------
+
+	// $query = "SELECT imas_questions.questionsetid,imas_questions.category,imas_libraries.name,imas_questions.id FROM imas_questions LEFT JOIN imas_libraries ";
+	// $query .= "ON imas_questions.category=imas_libraries.id WHERE imas_questions.id IN ($qids)";
+	// $result = mysql_query($query) or die("Query failed : " . mysql_error());
+	
 	$query = "SELECT imas_questions.questionsetid,imas_questions.category,imas_libraries.name,imas_questions.id FROM imas_questions LEFT JOIN imas_libraries ";
-	$query .= "ON imas_questions.category=imas_libraries.id WHERE imas_questions.id IN ($qids)";
-	$result = mysql_query($query) or die("Query failed : " . mysql_error());
-	while ($row = mysql_fetch_row($result)) {
-		$out[0][$order[$row[3]]] = $row[0];// = array($row[0],$row[1]);
+	$query .= "ON imas_questions.category=imas_libraries.id WHERE imas_questions.id IN (?)";
+
+	$STM = $DBH->prepare(query);
+	$PDOParam = stripslashes($qids); // PDO strip
+	$STM->execute(array($PDOParam)) or die("Query failed : " . $DBH->errorInfo());
+	
+	// while ($row = mysql_fetch_row($result)) {
+	while ($row = $STM->fetch(PDO::FETCH_NUM)) {
+	  // ------------------------------------------------------------------------------
+	  
+	        $out[0][$order[$row[3]]] = $row[0];// = array($row[0],$row[1]);
 		if ($row[2]==null) {
 			$out[1][$order[$row[3]]] = $row[1];
 		} else {

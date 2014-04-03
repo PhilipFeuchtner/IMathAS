@@ -281,19 +281,36 @@ END;
 		// ------------------------------------------------------------------------------
 
 		// DEBUG PDO SELECT#3 & INSERT#02 -----------------------------------------------
+
+		PDOParam = array();
 		
 		$query = "SELECT id FROM imas_courses WHERE (istemplate&8)=8 AND available<4";
-		if (isset($_GET['cid'])) { $query.= ' AND id='.intval($_GET['cid']); }
-		$result = mysql_query($query) or die("Query failed : " . mysql_error());
-		if (mysql_num_rows($result)>0) {
-			$query = "INSERT INTO imas_students (userid,courseid) VALUES ";
-			$i = 0;
-			while ($row = mysql_fetch_row($result)) {
-				if ($i>0) { $query .= ',';}
-				$query .= "($userid,{$row[0]})";
-				$i++;
-			}
-			mysql_query($query) or die("Query failed : " . mysql_error());
+		// if (isset($_GET['cid'])) { $query.= ' AND id='.intval($_GET['cid']); }
+		if (isset($_GET['cid'])) {
+		  $query.= ' AND id=?';
+		  PDOParam[] = stripslashes(intval($_GET['cid']));
+		}
+		
+		// $result = mysql_query($query) or die("Query failed : " . mysql_error());
+		$STM = $DBH->prepare($query);
+		$STM->execute($PDOParam) or die("Query failed : " . $DBH->errorInfo());
+
+		while ($row = STM->fetch(PDO::FETCH_NUM)) {
+	
+		  // if (mysql_num_rows($result)>0) {
+		  //	$query = "INSERT INTO imas_students (userid,courseid) VALUES ";
+		  $query = "INSERT INTO imas_students (userid,courseid) VALUES (?, ?)";
+		  
+		  // $i = 0;
+		  // while ($row = mysql_fetch_row($result)) {
+		  //	if ($i>0) { $query .= ',';}
+		  $STM1 = $DBH->prepare($query);
+		  $STM1->execute(array($userid,$row[0])) or die("Query failed : " . $DBH->errorInfo());
+		  
+		  // $query .= "($userid,{$row[0]})";
+		  // $i++;
+		  // }
+		  //	mysql_query($query) or die("Query failed : " . mysql_error());
 		}
 
 		// ------------------------------------------------------------------------------
@@ -305,10 +322,16 @@ END;
 	 	$line['password'] = md5('temp');
 	 	$_POST['usedetected'] = true;
 	 } else {
-	   // SELECT#04
-		 $query = "SELECT id,password,rights,groupid FROM imas_users WHERE SID = '{$_POST['username']}'";
-		 $result = mysql_query($query) or die("Query failed : " . mysql_error());
-		 $line = mysql_fetch_array($result, MYSQL_ASSOC);
+	   // DEBUG PDO SELECT#04 ----------------------------------------------------------
+	   // $query = "SELECT id,password,rights,groupid FROM imas_users WHERE SID = '{$_POST['username']}'";
+	   // $result = mysql_query($query) or die("Query failed : " . mysql_error());
+	   // $line = mysql_fetch_array($result, MYSQL_ASSOC);
+
+	   $STM = $DBH->prepare("SELECT id,password,rights,groupid FROM imas_users WHERE SID =?");
+	   $PDOParam = stripslashes($_POST['username']); // PDO strip
+	   $STM->execute(array($PDOParam)) or die("Query failed : " . $DBH->errorInfo());
+	   $line = $STM->fetch(PDO::FETCH_ASSOC);
+	   // ------------------------------------------------------------------------------
 	 }
 	// if (($line != null) && ($line['password'] == md5($_POST['password']))) {
 	 if (($line != null) && ((md5($line['password'].$_SESSION['challenge']) == $_POST['password']) ||($line['password'] == md5($_POST['password'])) )) {
@@ -373,15 +396,24 @@ END;
 			 $enc = 0; //give warning
 		 }
 		 
+		 // DEBUG PDO INSERT#03 & #04 ----------------------------------------------------
+		 
 		 if (isset($_POST['tzname']) && strpos(basename($_SERVER['PHP_SELF']),'upgrade.php')===false) {
 		   // INSERT#03
-		 	 $query = "INSERT INTO imas_sessions (sessionid,userid,time,tzoffset,tzname,sessiondata) VALUES ('$sessionid','$userid',$now,'{$_POST['tzoffset']}','{$_POST['tzname']}','$enc')";
+		   //  $query = "INSERT INTO imas_sessions (sessionid,userid,time,tzoffset,tzname,sessiondata) VALUES ('$sessionid','$userid',$now,'{$_POST['tzoffset']}','{$_POST['tzname']}','$enc')";
+		   $query = "INSERT INTO imas_sessions (sessionid,userid,time,tzoffset,tzname,sessiondata) VALUES (?,?,?,?,?, ?)";
+		   $PDOParam = stripslashes_deep(array($sessionid,$userid,$now,$_POST['tzoffset'],$_POST['tzname'],$enc)); 
 		 } else {
 		   // INSERT#04
-		 	 $query = "INSERT INTO imas_sessions (sessionid,userid,time,tzoffset,sessiondata) VALUES ('$sessionid','$userid',$now,'{$_POST['tzoffset']}','$enc')";
+		   // $query = "INSERT INTO imas_sessions (sessionid,userid,time,tzoffset,sessiondata) VALUES ('$sessionid','$userid',$now,'{$_POST['tzoffset']}','$enc')";
+		   $query = "INSERT INTO imas_sessions (sessionid,userid,time,tzoffset,sessiondata) VALUES (?,?,?,?,?)";
+		   $PDOParam = stripslashes_deep(array($sessionid,$userid,$now,$_POST['tzoffset'],$enc)); 
 		 }
-		 $result = mysql_query($query) or die("Query failed : " . mysql_error());
-	 
+		 // $result = mysql_query($query) or die("Query failed : " . mysql_error());
+		 $STM = $DBH->prepare($query);
+		 $STM->execute(array($PDOParam) or die("Query failed : " . $DBH->errorInfo());
+		 // ------------------------------------------------------------------------------
+		 
 		 // DEBUG PDO UPDATE#03 ----------------------------------------------------------
 		 // $query = "UPDATE imas_users SET lastaccess=$now WHERE id=$userid";
 		 // $result = mysql_query($query) or die("Query failed : " . mysql_error());
@@ -436,14 +468,23 @@ END;
 		*/
 	}
 	//$username = $_COOKIE['username'];
-	// SELECT#05
+	
+	// DEBUG PDO SELECT#05 ----------------------------------------------------------
+	
 	$query = "SELECT SID,rights,groupid,LastName,FirstName,deflib";
 	if (strpos(basename($_SERVER['PHP_SELF']),'upgrade.php')===false) {
 		$query .= ',listperpage,hasuserimg';
 	}
-	$query .= " FROM imas_users WHERE id='$userid'"; 
-	$result = mysql_query($query) or die("Query failed : " . mysql_error());
-	$line = mysql_fetch_array($result, MYSQL_ASSOC);
+	// $query .= " FROM imas_users WHERE id='$userid'";
+	$query .= " FROM imas_users WHERE id=?";
+	// $result = mysql_query($query) or die("Query failed : " . mysql_error());
+	// $line = mysql_fetch_array($result, MYSQL_ASSOC);
+			 
+	$STM = $DBH->prepare($query);
+	$STM->execute(array($userid)) or die("Query failed : " . $DBH->errorInfo());
+	$line = $STM->fetch(PDO::FETCH_ASSOC);
+	// ------------------------------------------------------------------------------
+		 
 	$username = $line['SID'];
 	$myrights = $line['rights'];
 	$groupid = $line['groupid'];
@@ -497,10 +538,19 @@ END;
 			$urlparts = parse_url($_SERVER['PHP_SELF']);
 			if (!in_array(basename($urlparts['path']),array('showtest.php','printtest.php','msglist.php','sentlist.php','viewmsg.php','msghistory.php','redeemlatepass.php','gb-viewasid.php'))) {
 			  //if (strpos(basename($_SERVER['PHP_SELF']),'showtest.php')===false && strpos(basename($_SERVER['PHP_SELF']),'printtest.php')===false && strpos(basename($_SERVER['PHP_SELF']),'msglist.php')===false && strpos(basename($_SERVER['PHP_SELF']),'sentlist.php')===false && strpos(basename($_SERVER['PHP_SELF']),'viewmsg.php')===false ) {
-			  // SELECT#06
-				$query = "SELECT courseid FROM imas_assessments WHERE id='{$sessiondata['ltiitemid']}'";
-				$result = mysql_query($query) or die("Query failed : " . mysql_error());
-				$cid = mysql_result($result,0,0);
+	       
+			  // DEBUG PDO SELECT#06 ----------------------------------------------------------
+			  // $query = "SELECT courseid FROM imas_assessments WHERE id='{$sessiondata['ltiitemid']}'";
+			  $STM = $DBH->prepare("SELECT courseid FROM imas_assessments WHERE id=?");
+			  $STM->execute(array(stripslashes($sessiondata['ltiitemid']))) or die("Query failed : " . $DBH->errorInfo());
+
+			  // $result = mysql_query($query) or die("Query failed : " . mysql_error());
+			  $line = $STM->fetch(PDO::FETCH_NUM); 
+	
+			  // $cid = mysql_result($result,0,0);
+			  $cid = $line[0];
+			  // ------------------------------------------------------------------------------
+				
 				header('Location: ' . $urlmode  . $_SERVER['HTTP_HOST'] . $imasroot . "/assessment/showtest.php?cid=$cid&id={$sessiondata['ltiitemid']}");
 				exit;
 			}
@@ -517,10 +567,17 @@ END;
 		} else {
 			$cid = $sessiondata['courseid'];
 		}
-		// SELECT#07
-		$query = "SELECT id,locked,timelimitmult,section FROM imas_students WHERE userid='$userid' AND courseid='$cid'";
-		$result = mysql_query($query) or die("Query failed : " . mysql_error());
-		$line = mysql_fetch_array($result, MYSQL_ASSOC);
+	
+		// DEBUG PDO SELECT#07 ----------------------------------------------------------
+		// $query = "SELECT id,locked,timelimitmult,section FROM imas_students WHERE userid='$userid' AND courseid='$cid'";
+		// $result = mysql_query($query) or die("Query failed : " . mysql_error());
+		// $line = mysql_fetch_array($result, MYSQL_ASSOC);
+
+		$STM = $DBH->prepare("SELECT id,locked,timelimitmult,section FROM imas_students WHERE userid=? AND courseid=?");
+		$STM->execute(array($userid, $cid)) or die("Query failed : " . $DBH->errorInfo());
+		$line = $STM->fetch(PDO::FETCH_ASSOC);
+		// ------------------------------------------------------------------------------
+		
 		if ($line != null) {
 			$studentid = $line['id'];
 			$studentinfo['timelimitmult'] = $line['timelimitmult'];
@@ -544,9 +601,14 @@ END;
 				  // ------------------------------------------------------------------------------
 					
 					$sessiondata['lastaccess'.$cid] = $now;
-					// INSERT#07
-					$query = "INSERT INTO imas_login_log (userid,courseid,logintime) VALUES ($userid,'$cid',$now)";
-					mysql_query($query) or die("Query failed : " . mysql_error());
+					// DEBUG PDO INSERT#07 ----------------------------------------------------------       
+					// $query = "INSERT INTO imas_login_log (userid,courseid,logintime) VALUES ($userid,'$cid',$now)";
+					// mysql_query($query) or die("Query failed : " . mysql_error());
+
+					$STM = $DBH->prepare("INSERT INTO imas_login_log (userid,courseid,logintime) VALUES (?,?,?)");
+					$STM->execute(stripslashes_deep(array($userid,$cid,$now))) or die("Query failed : " . $DBH->errorInfo());
+					
+					// ------------------------------------------------------------------------------
 					$sessiondata['loginlog'.$cid] = mysql_insert_id();
 					writesessiondata();
 				} else if (isset($CFG['GEN']['keeplastactionlog'])) {
@@ -561,10 +623,16 @@ END;
 				}
 			}
 		} else {
-		  // SELECT#08
-			$query = "SELECT id FROM imas_teachers WHERE userid='$userid' AND courseid='$cid'";
-			$result = mysql_query($query) or die("Query failed : " . mysql_error());
-			$line = mysql_fetch_array($result, MYSQL_ASSOC);
+		// DEBUG PDO SELECT#08 ----------------------------------------------------------
+		// $query = "SELECT id FROM imas_teachers WHERE userid='$userid' AND courseid='$cid'";
+		// $result = mysql_query($query) or die("Query failed : " . mysql_error());
+		// $line = mysql_fetch_array($result, MYSQL_ASSOC);
+
+		$STM = $DBH->prepare("SELECT id FROM imas_teachers WHERE userid=? AND courseid=?");
+		$STM->execute(array($userid, $cid)) or die("Query failed : " . $DBH->errorInfo());
+		$line = $STM->fetch(PDO::FETCH_ASSOC);
+		// ------------------------------------------------------------------------------
+
 			if ($line != null) {
 				if ($myrights>19) {
 					$teacherid = $line['id'];
@@ -588,10 +656,16 @@ END;
 				$teacherid = $userid;
 				$adminasteacher = true;
 			} else {
-			  // SELECT#09
-				$query = "SELECT id,section FROM imas_tutors WHERE userid='$userid' AND courseid='$cid'";
-				$result = mysql_query($query) or die("Query failed : " . mysql_error());
-				$line = mysql_fetch_array($result, MYSQL_ASSOC);
+			  // DEBUG PDO SELECT#09 ----------------------------------------------------------
+			  // $query = "SELECT id,section FROM imas_tutors WHERE userid='$userid' AND courseid='$cid'";
+			  // $result = mysql_query($query) or die("Query failed : " . mysql_error());
+			  // $line = mysql_fetch_array($result, MYSQL_ASSOC);
+
+			  $STM = $DBH->prepare("SELECT id,section FROM imas_tutors WHERE userid=? AND courseid=?");
+			  $STM->execute(array($userid, $cid)) or die("Query failed : " . $DBH->errorInfo());
+			  $line = $STM->fetch(PDO::FETCH_ASSOC);
+			  // ------------------------------------------------------------------------------
+		
 				if ($line != null) {
 					$tutorid = $line['id'];
 					$tutorsection = trim($line['section']);
@@ -599,11 +673,21 @@ END;
 		
 			}
 		}
-		// SELECT#10
+		// DEBUG PDO SELECT#10 ----------------------------------------------------------
+		// $query = "SELECT imas_courses.name,imas_courses.available,imas_courses.lockaid,imas_courses.copyrights,imas_users.groupid,imas_courses.theme,imas_courses.newflag,imas_courses.msgset,imas_courses.topbar,imas_courses.toolset,imas_courses.deftime,imas_courses.picicons ";
+		// $query .= "FROM imas_courses,imas_users WHERE imas_courses.id='$cid' AND imas_users.id=imas_courses.ownerid";
+		// $result = mysql_query($query) or die("Query failed : " . mysql_error());
+		// if (mysql_num_rows($result)>0) {
+		
 		$query = "SELECT imas_courses.name,imas_courses.available,imas_courses.lockaid,imas_courses.copyrights,imas_users.groupid,imas_courses.theme,imas_courses.newflag,imas_courses.msgset,imas_courses.topbar,imas_courses.toolset,imas_courses.deftime,imas_courses.picicons ";
-		$query .= "FROM imas_courses,imas_users WHERE imas_courses.id='$cid' AND imas_users.id=imas_courses.ownerid";
-		$result = mysql_query($query) or die("Query failed : " . mysql_error());
-		if (mysql_num_rows($result)>0) {
+		$query .= "FROM imas_courses,imas_users WHERE imas_courses.id=? AND imas_users.id=imas_courses.ownerid";
+		$STM = $DBH->prepare($query);
+		$STM->execute(array($cid)) or die("Query failed : " . $DBH->errorInfo());
+		$line = $STM->fetch(PDO::FETCH_ASSOC);
+		
+		if ($line) {
+		  // ------------------------------------------------------------------------------
+		  
 			$crow = mysql_fetch_row($result);
 			$coursename = $crow[0]; //mysql_result($result,0,0);
 			$coursetheme = $crow[5]; //mysql_result($result,0,5);

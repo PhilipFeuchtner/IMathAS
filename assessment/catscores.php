@@ -3,14 +3,23 @@
 //Called from showtest and gradebook
 //(c) 2006 David Lippman
 function catscores($quests,$scores,$defptsposs,$defoutcome=0,$cid) {
-	$qlist = "'" . implode("','",$quests) . "'";
-	$query = "SELECT id,category,points FROM imas_questions WHERE id IN ($qlist)";
- 	$result = mysql_query($query) or die("Query failed : $query; " . mysql_error());
-	$cat = array();
-	$pospts = array();
-	$tolookup = array($defoutcome);
-	while ($row = mysql_fetch_row($result)) {
-		if (is_numeric($row[1]) && $row[1]==0 && $defoutcome!=0) {
+  $qlist = "'" . implode("','",$quests) . "'";
+  // DEBUG PDO SELECT#01 ----------------------------------------------------------
+  
+  // $query = "SELECT id,category,points FROM imas_questions WHERE id IN ($qlist)";
+  // $result = mysql_query($query) or die("Query failed : $query; " . mysql_error());
+
+  $STM = $DBH->prepare("SELECT id,category,points FROM imas_questions WHERE id IN (?)");
+  $STM->execute(array($qlist)) or die("Query failed : " . $DBH->errorInfo());
+	   
+  $cat = array();
+  $pospts = array();
+  $tolookup = array($defoutcome);
+	
+  // while ($row = mysql_fetch_row($result)) {
+  while (($row = $STM->fetch(PDO::FETCH_COLUMN, PDO::FETCH_NUM)) !== false) {
+    // ------------------------------------------------------------------------------
+	  if (is_numeric($row[1]) && $row[1]==0 && $defoutcome!=0) {
 			$cat[$row[0]] = $defoutcome;
 		} else {
 			$cat[$row[0]] = $row[1];
@@ -29,16 +38,29 @@ function catscores($quests,$scores,$defptsposs,$defoutcome=0,$cid) {
 	$outcomenames = array();
 	$outcomenames[0] = "Uncategorized";
 	if (count($tolookup)>0) {
-		$lulist = "'".implode("','",$tolookup)."'";
-		$query = "SELECT id,name FROM imas_outcomes WHERE id IN ($lulist)";
-		$result = mysql_query($query) or die("Query failed : $query; " . mysql_error());
-		while ($row = mysql_fetch_row($result)) {
-			$outcomenames[$row[0]] = $row[1];
-		}
-		
-		$query = "SELECT outcomes FROM imas_courses WHERE id='$cid'";
-		$result = mysql_query($query) or die("Query failed : " . mysql_error());
-		$row = mysql_fetch_row($result);
+	  $lulist = "'".implode("','",$tolookup)."'";
+	  // DEBUG PDO SELECT#02 ----------------------------------------------------------
+	  // $query = "SELECT id,name FROM imas_outcomes WHERE id IN ($lulist)";
+	  // $result = mysql_query($query) or die("Query failed : $query; " . mysql_error());
+
+	  $STM = $DBH->prepare("SELECT id,name FROM imas_outcomes WHERE id IN (?)");
+	  $STM->execute(array($lulist)) or die("Query failed : " . $DBH->errorInfo());
+
+	  // while ($row = mysql_fetch_row($result)) {
+	  while (($row = $STM->fetch(PDO::FETCH_COLUMN, PDO::FETCH_NUM)) !== false) {
+	    // ------------------------------------------------------------------------------
+	    $outcomenames[$row[0]] = $row[1];
+	  }
+
+	  // DEBUG PDO SELECT#03 ----------------------------------------------------------
+	  // $query = "SELECT outcomes FROM imas_courses WHERE id='$cid'";
+	  // $result = mysql_query($query) or die("Query failed : " . mysql_error());
+
+	  $STM = $DBH->prepare("SELECT outcomes FROM imas_courses WHERE id=?");
+	  $STM->execute(array($cid)) or die("Query failed : " . $DBH->errorInfo());
+	  
+	  $row = $STM->fetch(PDO::FETCH_COLUMN, PDO::FETCH_NUM);
+	  // ------------------------------------------------------------------------------
 		if ($row[0]=='') {
 			$outcomes = array();
 		} else {

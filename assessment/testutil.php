@@ -10,25 +10,57 @@ function getquestioninfo($qns,$testsettings) {
 	if (!is_array($qns)) {
 		$qns = array($qns);
 	} 
-	$qnlist = "'".implode("','",$qns)."'";	
+	$qnlist = "'".implode("','",$qns)."'";
+
+	$query = "";
+	$PDOParam = array();
+	
 	if ($testsettings['defoutcome']!=0) {
-		//we'll need to run two simpler queries rather than a single join query
+	  //we'll need to run two simpler queries rather than a single join query
 	  $outcomenames = array();
-	  // SELECT#01
-		$query = "SELECT id,name FROM imas_outcomes WHERE courseid='{$testsettings['courseid']}'";
-		$result = mysql_query($query) or die("Query failed: $query: " . mysql_error());
-		while ($row = mysql_fetch_row($result)) {
+	  // DEBUG PDO SELECT#01 ----------------------------------------------------------
+
+	  // $query = "SELECT id,name FROM imas_outcomes WHERE courseid='{$testsettings['courseid']}'";
+	  // $result = mysql_query($query) or die("Query failed: $query: " . mysql_error());
+
+	  $query = "SELECT id,name FROM imas_outcomes WHERE courseid=?";
+	  $PDOParam = array($testsettings['courseid']);
+	  
+	  $STM = $DBH->prepare($query);
+	  $STM->execute($PDOParam) or die("Query failed : " . $DBH->errorInfo());
+		
+	  // while ($row = mysql_fetch_row($result)) {
+	  while ($row = STM->fetch(PDO::FETCH_NUM)) {
+	    // ------------------------------------------------------------------------------
 			$outcomenames[$row[0]] = $row[1];
 		}
+		// DEBUG PDO SELECT#02a ---------------------------------------------------------
+
+		// $query = "SELECT iq.id,iq.questionsetid,iq.category,iq.points,iq.penalty,iq.attempts,iq.regen,iq.showans,iq.withdrawn,iq.showhints,iqs.qtype,iqs.control ";
+		// $query .= "FROM imas_questions AS iq JOIN imas_questionset AS iqs ON iq.questionsetid=iqs.id WHERE iq.id IN ($qnlist)";
+
 		$query = "SELECT iq.id,iq.questionsetid,iq.category,iq.points,iq.penalty,iq.attempts,iq.regen,iq.showans,iq.withdrawn,iq.showhints,iqs.qtype,iqs.control ";
-		$query .= "FROM imas_questions AS iq JOIN imas_questionset AS iqs ON iq.questionsetid=iqs.id WHERE iq.id IN ($qnlist)";
+		$query .= "FROM imas_questions AS iq JOIN imas_questionset AS iqs ON iq.questionsetid=iqs.id WHERE iq.id IN (?)";
+		$PDOParam = $qms;
 	} else {
-		$query = "SELECT iq.id,iq.questionsetid,iq.category,iq.points,iq.penalty,iq.attempts,iq.regen,iq.showans,iq.withdrawn,iq.showhints,io.name,iqs.qtype,iqs.control ";
-		$query .= "FROM (imas_questions AS iq JOIN imas_questionset AS iqs ON iq.questionsetid=iqs.id) LEFT JOIN imas_outcomes as io ";
-		$query .= "ON iq.category=io.id WHERE iq.id IN ($qnlist)";
+	  // DEBUG PDO SELECT#02b ---------------------------------------------------------
+
+	  // $query = "SELECT iq.id,iq.questionsetid,iq.category,iq.points,iq.penalty,iq.attempts,iq.regen,iq.showans,iq.withdrawn,iq.showhints,io.name,iqs.qtype,iqs.control ";
+	  // $query .= "FROM (imas_questions AS iq JOIN imas_questionset AS iqs ON iq.questionsetid=iqs.id) LEFT JOIN imas_outcomes as io ";
+	  // $query .= "ON iq.category=io.id WHERE iq.id IN ($qnlist)";
+
+	  $query = "SELECT iq.id,iq.questionsetid,iq.category,iq.points,iq.penalty,iq.attempts,iq.regen,iq.showans,iq.withdrawn,iq.showhints,io.name,iqs.qtype,iqs.control ";
+	  $query .= "FROM (imas_questions AS iq JOIN imas_questionset AS iqs ON iq.questionsetid=iqs.id) LEFT JOIN imas_outcomes as io ";
+	  $query .= "ON iq.category=io.id WHERE iq.id IN (?)";
+	  $PDOParam = $qms;
 	}
-	$result = mysql_query($query) or die("Query failed: $query: " . mysql_error());
-	while ($line = mysql_fetch_array($result, MYSQL_ASSOC)) {
+	// $result = mysql_query($query) or die("Query failed: $query: " . mysql_error());
+	$STM = $DBH->prepare($query);
+	$STM->execute($PDOParam) or die("Query failed : " . $DBH->errorInfo());
+		
+	// while ($line = mysql_fetch_array($result, MYSQL_ASSOC)) {
+	while ($line = STM->fetch(PDO::FETCH_ASSOC)) {
+	  // ------------------------------------------------------------------------------
 		if (is_numeric($line['category'])) {
 			if ($testsettings['defoutcome']!=0) {
 				if ($line['category']==0) {
@@ -504,10 +536,20 @@ function scorequestion($qn, $rectime=true) {
 		} else {
 			$time = 0;  //for all at once display, where time is not useful info
 		}
-		// INSERT#01
-		$query = "INSERT INTO imas_firstscores (courseid,qsetid,score,scoredet,timespent) VALUES ";
-		$query .= "('".addslashes($testsettings['courseid'])."','".$qi[$questions[$qn]]['questionsetid']."','".round(100*getpts($unitrawscore))."','".$rawscores[$qn]."','$time')";
-		mysql_query($query) or die("Query failed : " . mysql_error());
+		// DEBUG PDO INSERT#01 ----------------------------------------------------------
+		// $query = "INSERT INTO imas_firstscores (courseid,qsetid,score,scoredet,timespent) VALUES ";
+		// $query .= "('".addslashes($testsettings['courseid'])."','".$qi[$questions[$qn]]['questionsetid']."','".round(100*getpts($unitrawscore))."','".$rawscores[$qn]."','$time')";
+		// mysql_query($query) or die("Query failed : " . mysql_error());
+
+		$STM = $DBH->prepare("INSERT INTO imas_firstscores (courseid,qsetid,score,scoredet,timespent) VALUES (?,?,?,?,?)");
+                $query->execute(array($testsettings['courseid'],
+				      $qi[$questions[$qn]]['questionsetid'],
+				      round(100*getpts($unitrawscore)),
+				      $rawscores[$qn],
+				      '$time'))
+		  or die("Query failed : " . $DBH->errorInfo());
+		
+		// ------------------------------------------------------------------------------
 	}
 	
 	//$scores[$qn] = $afterpenalty;
@@ -560,44 +602,97 @@ function recordtestdata($limit=false) {
 	$reattemptinglist = implode(',',$reattempting);
 	
 	$now = time();
-	// UPDATE#01
+	// DEBUG PDO UPDATE#02 ----------------------------------------------------------
+	/* if ($isreview) { */
+	/* 	if ($limit) { */
+	/* 		$query = "UPDATE imas_assessment_sessions SET reviewlastanswers='$lalist' "; */
+	/* 	} else { */
+	/* 		$query = "UPDATE imas_assessment_sessions SET reviewscores='$scorelist',reviewattempts='$attemptslist',reviewseeds='$seedslist',reviewlastanswers='$lalist',"; */
+	/* 		$query .= "reviewreattempting='$reattemptinglist' "; */
+	/* 	} */
+	/* } else { */
+	/* 	if ($limit) { */
+	/* 		$query = "UPDATE imas_assessment_sessions SET lastanswers='$lalist',timeontask='$timeslist' "; */
+	/* 	} else { */
+	/* 		$query = "UPDATE imas_assessment_sessions SET scores='$scorelist',attempts='$attemptslist',seeds='$seedslist',lastanswers='$lalist',"; */
+	/* 		$query .= "bestseeds='$bestseedslist',bestattempts='$bestattemptslist',bestscores='$bestscorelist',bestlastanswers='$bestlalist',"; */
+	/* 		$query .= "endtime=$now,reattempting='$reattemptinglist',timeontask='$timeslist' "; */
+	/* 	} */
+	/* 	if (isset($lti_sourcedid) && strlen($lti_sourcedid)>0 && $sessiondata['ltiitemtype']==0) {  */
+	/* 		//update lti record.  We only do this for single assessment placements */
+			
+	/* 		require_once("../includes/ltioutcomes.php"); */
+			
+	/* 		$total = 0; */
+	/* 		for ($i =0; $i < count($bestscores);$i++) { */
+	/* 			if (getpts($bestscores[$i])>0) { $total += getpts($bestscores[$i]);} */
+	/* 		} */
+	/* 		$totpossible = totalpointspossible($qi); */
+	/* 		$grade = round($total/$totpossible,4); */
+	/* 		$res = updateLTIgrade('update',$lti_sourcedid,$testsettings['id'],$grade); */
+			
+	/* 	} */
+	/* } */
+	/* if ($testsettings['isgroup']>0 && $sessiondata['groupid']>0 && !$isreview) { */
+	/* 	$query .= "WHERE agroupid='{$sessiondata['groupid']}' AND assessmentid='{$testsettings['id']}'"; */
+	/* } else { */
+	/* 	$query .= "WHERE id='$testid' LIMIT 1"; */
+	/* } */
+
+	$PDOParam = array();
+	$query = "";
+	
 	if ($isreview) {
-		if ($limit) {
-			$query = "UPDATE imas_assessment_sessions SET reviewlastanswers='$lalist' ";
-		} else {
-			$query = "UPDATE imas_assessment_sessions SET reviewscores='$scorelist',reviewattempts='$attemptslist',reviewseeds='$seedslist',reviewlastanswers='$lalist',";
-			$query .= "reviewreattempting='$reattemptinglist' ";
-		}
+	  if ($limit) {
+	    $query = "UPDATE imas_assessment_sessions SET reviewlastanswers=? ";
+	    $PDOParam = array($lalist);
+	  } else {
+	    $query = "UPDATE imas_assessment_sessions SET reviewscores=?,reviewattempts=?,reviewseeds=?,reviewlastanswers=?,";
+	    $query .= "reviewreattempting=? ";
+	    $PDOParam = array($scorelist, $attemptslist, $seedslist, $lalist,
+			      $reattemptinglist);
+	  }
 	} else {
-		if ($limit) {
-			$query = "UPDATE imas_assessment_sessions SET lastanswers='$lalist',timeontask='$timeslist' ";
-		} else {
-			$query = "UPDATE imas_assessment_sessions SET scores='$scorelist',attempts='$attemptslist',seeds='$seedslist',lastanswers='$lalist',";
-			$query .= "bestseeds='$bestseedslist',bestattempts='$bestattemptslist',bestscores='$bestscorelist',bestlastanswers='$bestlalist',";
-			$query .= "endtime=$now,reattempting='$reattemptinglist',timeontask='$timeslist' ";
-		}
-		if (isset($lti_sourcedid) && strlen($lti_sourcedid)>0 && $sessiondata['ltiitemtype']==0) { 
-			//update lti record.  We only do this for single assessment placements
-			
-			require_once("../includes/ltioutcomes.php");
-			
-			$total = 0;
-			for ($i =0; $i < count($bestscores);$i++) {
-				if (getpts($bestscores[$i])>0) { $total += getpts($bestscores[$i]);}
-			}
-			$totpossible = totalpointspossible($qi);
-			$grade = round($total/$totpossible,4);
-			$res = updateLTIgrade('update',$lti_sourcedid,$testsettings['id'],$grade);
-			
-		}
+	  if ($limit) {
+	    $query = "UPDATE imas_assessment_sessions SET lastanswers=?,timeontask=? ";
+	    $PDOParam = array($lalist, $timeslist);
+	  } else {
+	    $query = "UPDATE imas_assessment_sessions SET scores=?,attempts=?,seeds=?,lastanswers=?,";
+	    $query .= "bestseeds=?,bestattempts=?,bestscores=?,bestlastanswers=?,";
+	    $query .= "endtime=?,reattempting=?,timeontask=? ";
+	    $PDOParam = array($scorelist, $attemptslist, $seedslist, $lalist,
+			      $bestseedslist, $bestattemptslist, $bestscorelist, $bestlalist,
+			      $now, $reattemptinglist, $timeslist);	    
+	  }
+	  if (isset($lti_sourcedid) && strlen($lti_sourcedid)>0 && $sessiondata['ltiitemtype']==0) { 
+	    //update lti record.  We only do this for single assessment placements
+	    
+	    require_once("../includes/ltioutcomes.php");
+	    
+	    $total = 0;
+	    for ($i =0; $i < count($bestscores);$i++) {
+	      if (getpts($bestscores[$i])>0) { $total += getpts($bestscores[$i]);}
+	    }
+	    $totpossible = totalpointspossible($qi);
+	    $grade = round($total/$totpossible,4);
+	    $res = updateLTIgrade('update',$lti_sourcedid,$testsettings['id'],$grade);		
+	  }
 	}
 	if ($testsettings['isgroup']>0 && $sessiondata['groupid']>0 && !$isreview) {
-		$query .= "WHERE agroupid='{$sessiondata['groupid']}' AND assessmentid='{$testsettings['id']}'";
+	  $query .= "WHERE agroupid=? AND assessmentid=?";
+	  $PDOParam[] = $sessiondata['groupid'];
+	  $PDOParam[] = $testsettings['id'];
 	} else {
-		$query .= "WHERE id='$testid' LIMIT 1";
+	  $query .= "WHERE id=? LIMIT 1";
+	  $PDOParam[] = $testid;
 	}
 	
-	mysql_query($query) or die("Query failed : $query " . mysql_error());
+	// mysql_query($query) or die("Query failed : $query " . mysql_error());
+	
+	$STM = $DBH->prepare($query);
+	$STM->execute() or die("Query failed : " . $DBH->errorInfo());
+	
+	// ------------------------------------------------------------------------------
 }
 
 function deletefilesifnotused($delfrom,$ifnothere) {

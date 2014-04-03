@@ -29,15 +29,31 @@ function interpret($blockname,$anstype,$str,$countcnt=1)
 }
 
 function getquestionqtext($m) {
-        // SELECT#01
-	$query = "SELECT qtext FROM imas_questionset WHERE id='{$m[2]}'";
-	$result = mysql_query($query) or die("Query failed : " . mysql_error());
-	if (mysql_num_rows($result)==0) {
-		echo _('bad question id in includeqtextfrom');
-		return "";
-	} else {
-		return mysql_result($result,0,0);
-	}
+  // DEBUG PDO SELECT#01 ----------------------------------------------------------
+
+  // $query = "SELECT qtext FROM imas_questionset WHERE id='{$m[2]}'";
+  // $result = mysql_query($query) or die("Query failed : " . mysql_error());
+
+  $STM = $DBH->prepare("SELECT qtext FROM imas_questionset WHERE id=?");
+  $PDOParam = stripslashes_deep($m[2]); // PDO strip
+  $STM->execute(array($PDOParam)) or die("Query failed : " . $DBH->errorInfo());
+  $line = $STM->fetch(PDO::FETCH_NUM);
+	
+  // if (mysql_num_rows($result)==0) {
+  //   echo _('bad question id in includeqtextfrom');
+  //   return "";
+  // } else {
+  //   return mysql_result($result,0,0);
+  // }
+
+  if ($line) {
+    return $line[0];
+  } else {
+    echo _('bad question id in includeqtextfrom');
+    return "";
+  }
+  
+  // ------------------------------------------------------------------------------
 }
 //interpreter some code text.  Returns a PHP code string.
 function interpretline($str,$anstype,$countcnt) {
@@ -575,18 +591,39 @@ function tokenize($str,$anstype,$countcnt) {
 			} else if ($lastsym[0] == 'importcodefrom' || $lastsym[0] == 'includecodefrom') {
 				$out = intval(substr($out,1,strlen($out)-2));
                                 // SELECT#02
-				$query = "SELECT control,qtype FROM imas_questionset WHERE id='$out'";
-				$result = mysql_query($query) or die("Query failed : " . mysql_error());
-				if (mysql_num_rows($result)==0) {
-					//was an error, return error token
-					return array(array('',9));
+				// DEBUG PDO SELECT#02 ----------------------------------------------------------
+       
+				// $query = "SELECT control,qtype FROM imas_questionset WHERE id='$out'";
+				// $result = mysql_query($query) or die("Query failed : " . mysql_error());
+				
+				$STM = $DBH->prepare("SELECT control,qtype FROM imas_questionset WHERE id==?");
+				$PDOParam = stripslashes($deep); // PDO strip
+				$STM->execute($PDOParam) or die("Query failed : " . $DBH->errorInfo());
+				$line = $STM->fetch(PDO::FETCH_NUM);
+
+				// if (mysql_num_rows($result)==0) {
+				//	//was an error, return error token
+				//	return array(array('',9));
+				// } else {
+				//	//$inside = interpretline(mysql_result($result,0,0),$anstype);
+				//	$inside = interpret('control',$anstype,mysql_result($result,0,0),$countcnt+1);
+				//	if (mysql_result($result,0,1)!=$anstype) {
+				//		//echo 'Imported code question type does not match current question answer type';
+				//	}
+				// }
+
+				if ($line) {
+				  //$inside = interpretline(mysql_result($result,0,0),$anstype);
+				  $inside = interpret('control',$anstype,$line[0],$countcnt+1);
+				  if ($line[1]!=$anstype) {
+				    //echo 'Imported code question type does not match current question answer type';
+				  }
 				} else {
-					//$inside = interpretline(mysql_result($result,0,0),$anstype);
-					$inside = interpret('control',$anstype,mysql_result($result,0,0),$countcnt+1);
-					if (mysql_result($result,0,1)!=$anstype) {
-						//echo 'Imported code question type does not match current question answer type';
-					}
+				  //was an error, return error token
+				  return array(array('',9));
 				}
+				
+				// ------------------------------------------------------------------------------
 				if ($inside=='error') {
 					//was an error, return error token
 					return array(array('',9));
