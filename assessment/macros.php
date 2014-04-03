@@ -3,8 +3,8 @@
 //(c) 2006 David Lippman
 
 
-array_push($allowedmacros,"exp","sec","csc","cot","sech","csch","coth","nthlog","sinn","cosn","tann","secn","cscn","cotn","rand","rrand","rands","rrands","randfrom","randsfrom","jointrandfrom","diffrandsfrom","nonzerorand","nonzerorrand","nonzerorands","nonzerorrands","diffrands","diffrrands","nonzerodiffrands","nonzerodiffrrands","singleshuffle","jointshuffle","makepretty","makeprettydisp","showplot","addlabel","showarrays","horizshowarrays","showasciisvg","listtoarray","arraytolist","calclisttoarray","sortarray","consecutive","gcd","lcm","calconarray","mergearrays","sumarray","dispreducedfraction","diffarrays","intersectarrays","joinarray","unionarrays","count","polymakepretty","polymakeprettydisp","makexpretty","makexprettydisp","calconarrayif","in_array","prettyint","prettyreal","prettysigfig","arraystodots","subarray","showdataarray","arraystodoteqns","array_flip","arrayfindindex","fillarray","array_reverse","root","getsnapwidthheight","is_numeric");
-array_push($allowedmacros,"numtowords","randname","randmalename","randfemalename","randnames","randmalenames","randfemalenames","randcity","randcities","prettytime","definefunc","evalfunc","safepow","arrayfindindices","stringtoarray","strtoupper","strtolower","ucfirst","makereducedfraction","stringappend","stringprepend","textonimage","addplotborder","addlabelabs","makescinot","today","numtoroman","sprintf","arrayhasduplicates","addfractionaxislabels","decimaltofraction","ifthen","multicalconarray","htmlentities","formhoverover","formpopup","connectthedots","jointsort","stringpos","stringlen","stringclean","substr","substr_count","str_replace","makexxpretty","makexxprettydisp","forminlinebutton","makenumberrequiretimes","comparenumbers","comparefunctions","getnumbervalue","showrecttable","htmldisp","getstuans","checkreqtimes","stringtopolyterms","getfeedbacktxt","getfeedbacktxtessay","getfeedbacktxtnumber","explode","gettwopointlinedata","getdotsdata","gettwopointdata","getlinesdata","adddrawcommand","array_unique","ABarray","scoremultiorder");
+array_push($allowedmacros,"exp","sec","csc","cot","sech","csch","coth","nthlog","sinn","cosn","tann","secn","cscn","cotn","rand","rrand","rands","rrands","randfrom","randsfrom","jointrandfrom","diffrandsfrom","nonzerorand","nonzerorrand","nonzerorands","nonzerorrands","diffrands","diffrrands","nonzerodiffrands","nonzerodiffrrands","singleshuffle","jointshuffle","makepretty","makeprettydisp","showplot","addlabel","showarrays","horizshowarrays","showasciisvg","listtoarray","arraytolist","calclisttoarray","sortarray","consecutive","gcd","lcm","calconarray","mergearrays","sumarray","dispreducedfraction","diffarrays","intersectarrays","joinarray","unionarrays","count","polymakepretty","polymakeprettydisp","makexpretty","makexprettydisp","calconarrayif","in_array","prettyint","prettyreal","prettysigfig","arraystodots","subarray","showdataarray","arraystodoteqns","array_flip","arrayfindindex","fillarray","array_reverse","root","getsnapwidthheight","is_numeric","sign");
+array_push($allowedmacros,"numtowords","randname","randmalename","randfemalename","randnames","randmalenames","randfemalenames","randcity","randcities","prettytime","definefunc","evalfunc","safepow","arrayfindindices","stringtoarray","strtoupper","strtolower","ucfirst","makereducedfraction","stringappend","stringprepend","textonimage","addplotborder","addlabelabs","makescinot","today","numtoroman","sprintf","arrayhasduplicates","addfractionaxislabels","decimaltofraction","ifthen","multicalconarray","htmlentities","formhoverover","formpopup","connectthedots","jointsort","stringpos","stringlen","stringclean","substr","substr_count","str_replace","makexxpretty","makexxprettydisp","forminlinebutton","makenumberrequiretimes","comparenumbers","comparefunctions","getnumbervalue","showrecttable","htmldisp","getstuans","checkreqtimes","stringtopolyterms","getfeedbacktxt","getfeedbacktxtessay","getfeedbacktxtnumber","explode","gettwopointlinedata","getdotsdata","gettwopointdata","getlinesdata","adddrawcommand","array_unique","ABarray","scoremultiorder","randstate","randstates");
 function mergearrays($a,$b) {
 	if (!is_array($a)) {
 		$a = array($a);
@@ -1277,6 +1277,7 @@ function dispreducedfraction($n,$d,$dblslash=false,$varinnum=false) {
 }
 
 function makereducedfraction($n,$d,$dblslash=false,$varinnum=false) {
+	if ($n==0) {return '0';}
 	$g = gcd($n,$d);
 	$n = $n/$g;
 	$d = $d/$g;	
@@ -1686,6 +1687,20 @@ function randcities($n=1) {
 	}
 }
 
+function randstates($n=1) {
+	$states = array("Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","Dist. of Columbia","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming");
+
+	$c = count($states);
+	if ($n==1) {
+		return $states[rand(0,$c-1)];
+	} else {
+		shuffle($states);
+		return array_slice($states,0,$n);
+	}
+}
+function randstate() {
+	return randstates(1);
+}
 function randcity() {
 	return randcities(1);
 }
@@ -2509,6 +2524,10 @@ function comparefunctions($a,$b,$vars='x',$tol='.001',$domain='-10,10') {
 	if ($tol{0}=='|') {
 		$abstolerance = floatval(substr($tol,1));
 	}
+	$type = "expression";
+	if (strpos($a, '=')!==false && strpos($b, '=')!==false) {
+		$type = "equation";
+	}
 	$fromto = explode(',',$domain);
 	$variables = explode(',',$vars);
 	$vlist = implode("|",$variables);
@@ -2523,6 +2542,13 @@ function comparefunctions($a,$b,$vars='x',$tol='.001',$domain='-10,10') {
 			}
 		}
 	}
+	if ($type=='equation') {
+		if (substr_count($a, '=')!=1) {return false;}
+		$a = preg_replace('/(.*)=(.*)/','$1-($2)',$a);
+		if (substr_count($b, '=')!=1) {return false;}
+		$b = preg_replace('/(.*)=(.*)/','$1-($2)',$b);
+	}
+	
 	$a = mathphp(makepretty(mathphppre($a)), $vlist);
 	$b = mathphp(makepretty(mathphppre($b)), $vlist);
 	//echo "pretty: $a, $b";
@@ -2533,6 +2559,7 @@ function comparefunctions($a,$b,$vars='x',$tol='.001',$domain='-10,10') {
 	$cntnana = 0;
 	$cntnanb = 0;
 	$correct = true;
+	$ratios = array();
 	for ($i = 0; $i < 20; $i++) {
 		for($j=0; $j < count($variables); $j++) {
 			$tp[$j] = $tps[$i][$j];
@@ -2543,10 +2570,21 @@ function comparefunctions($a,$b,$vars='x',$tol='.001',$domain='-10,10') {
 		if (isNaN($ansa)) {$cntnana++; continue;} //avoid NaN problems
 		if (isNaN($ansb)) {$cntnanb++; continue;}
 		
-		if (isset($abstolerance)) {
-			if (abs($ansa-$ansb) > $abstolerance-1E-12) {$correct = false; break;}	
+		if ($type=='equation') {
+			if (abs($ansa)>.000001 && is_numeric($ansb)) {
+				$ratios[] = $ansb/$ansa;
+				if (abs($ansb)<=.00000001 && $ansa!=0) {
+					$cntzero++;
+				}
+			} else if (abs($ansa)<=.000001 && is_numeric($ansb) && abs($ansb)<=.00000001) {
+				$cntbothzero++;
+			}
 		} else {
-			if ((abs($ansa-$ansb)/(abs($ansa)+.0001) > $tol-1E-12)) {$correct = false; break;}
+			if (isset($abstolerance)) {
+				if (abs($ansa-$ansb) > $abstolerance-1E-12) {$correct = false; break;}	
+			} else {
+				if ((abs($ansa-$ansb)/(abs($ansa)+.0001) > $tol-1E-12)) {$correct = false; break;}
+			}
 		}
 		
 	}
@@ -2557,6 +2595,26 @@ function comparefunctions($a,$b,$vars='x',$tol='.001',$domain='-10,10') {
 	}
 	if (abs($cntnana - $cntnanb)>1) {
 		return false;
+	}
+	if ($type=="equation") {
+		if ($cntbothzero>18) {
+			$correct = true;
+		} else if (count($ratios)>0) {
+			if (count($ratios)==$cntzero) {
+				$correct = false;
+			} else {
+				$meanratio = array_sum($ratios)/count($ratios);
+				for ($i=0; $i<count($ratios); $i++) {
+					if (isset($abstolerance)) {
+						if (abs($ratios[$i]-$meanratio) > $abstolerance-1E-12) {$correct = false; break;}	
+					} else {
+						if ((abs($ratios[$i]-$meanratio)/(abs($meanratio)+.0001) > $tol-1E-12)) {$correct = false; break;}
+					}
+				}
+			}
+		} else {
+			$correct = false;
+		}
 	}
 	if ($correct) {
 		return true;
@@ -2837,6 +2895,16 @@ function scoremultiorder($stua, $answer, $swap, $type='string') {
 		}
 	}
 	return $newans;
+}
+
+function sign($a,$str=false) {
+	if ($str==="onlyneg") {
+		return ($a<0)?"-":"";
+	} else if ($str !== false) {
+		return ($a<0)?"-":"+";
+	} else {
+		return ($a<0)?-1:1;
+	}
 }
 			
 ?>

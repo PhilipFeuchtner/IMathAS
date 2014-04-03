@@ -1217,6 +1217,7 @@ if (!isset($_POST['embedpostback'])) {
 	//identify question-specific  intro/instruction 
 	//comes in format [Q 1-3] in intro
 	if (strpos($testsettings['intro'],'[Q')!==false) {
+		$testsettings['intro'] = preg_replace('/((<span|<strong|<em)[^>]*>)?\[Q\s+(\d+(\-(\d+))?)\s*\]((<\/span|<\/strong|<\/em)[^>]*>)?/','[Q $3]',$testsettings['intro']);
 		if(preg_match_all('/\<p[^>]*>\s*\[Q\s+(\d+)(\-(\d+))?\s*\]\s*<\/p>/',$testsettings['intro'],$introdividers,PREG_SET_ORDER)) {
 			$intropieces = preg_split('/\<p[^>]*>\s*\[Q\s+(\d+)(\-(\d+))?\s*\]\s*<\/p>/',$testsettings['intro']);
 			foreach ($introdividers as $k=>$v) {
@@ -1811,7 +1812,15 @@ if (!isset($_POST['embedpostback'])) {
 					}
 				}
 				if ($showeachscore && $GLOBALS['questionmanualgrade'] != true) {
-					$colors = scorestocolors($noraw?$scores[$qn]:$rawscores[$qn],$qi[$questions[$qn]]['points'],$qi[$questions[$qn]]['answeights'],$noraw);
+					if (!$noraw) {
+						if (strpos($rawscores[$qn],'~')!==false) {
+							$colors = explode('~',$rawscores[$qn]);
+						} else {
+							$colors = array($rawscores[$qn]);
+						}
+					} else {
+						$colors = scorestocolors($noraw?$scores[$qn]:$rawscores[$qn],$qi[$questions[$qn]]['points'],$qi[$questions[$qn]]['answeights'],$noraw);
+					}
 				}
 				
 				
@@ -2806,7 +2815,15 @@ if (!isset($_POST['embedpostback'])) {
 			
 			for ($i=0; $i<count($questions); $i++) {
 				echo '<div>';
-				$col = scorestocolors($noraw?$scores[$qn]:$rawscores[$qn], $qi[$questions[$i]]['points'], $qi[$questions[$i]]['answeights'],$noraw);
+				if (!$noraw) {
+					if (strpos($rawscores[$qn],'~')!==false) {
+						$col = explode('~',$rawscores[$qn]);
+					} else {
+						$col = array($rawscores[$qn]);
+					}
+				} else {
+					$col = scorestocolors($noraw?$scores[$qn]:$rawscores[$qn], $qi[$questions[$i]]['points'], $qi[$questions[$i]]['answeights'],$noraw);
+				}
 				displayq($i, $qi[$questions[$i]]['questionsetid'],$seeds[$i],$showa,false,$attempts[$i],false,false,false,$col);
 				echo "<div class=review>", _('Question')." ".($i+1).". ", _('Last Attempt:');
 				echo printscore($scores[$i], $i);

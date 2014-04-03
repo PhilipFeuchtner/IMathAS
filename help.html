@@ -1630,6 +1630,7 @@ Array randomizers (return multiple results):
     it behaves identically to diffrandsfrom</li>
 <li><b>randnames(n),randmalenames(n),randfemalenames(n)</b>:  Returns n random first names</li>
 <li><b>randcity(),randcities(n)</b>:  Returns one or n random city names</li>
+<li><b>randstate(),randstates(n)</b>:  Returns one or n random US state names</li>
 </ul>
 
 </div>
@@ -1848,6 +1849,8 @@ These macros are used for mathematical calculations:
 <li><b>abs(v)</b>: Absolute value</li>
 <li><b>gcd(a,b)</b>: Greatest common divisor of a and b</li>
 <li><b>lcm(a,b)</b>: Least common multiple of a and b</li>
+<li><b>sign(a,[option])</b>:  Returns the sign of a, as 1 or -1.  If option is set to true, returns a string "+" or "-" instead. If option
+  is set to "onlyneg", it returns the string "-" if a is negative, or "" otherwise.</li>
 <li><b>v!</b>: Factorial, like $a = $b!</li>
 <li><b>evalfunc(func,vars,val1,val2,..)</b>: Evaluates a function given the variables and values for each variable.
   for example evalfunc("x^2*y","x,y",2,3) will evaluate x^2*y with x=2, y=3</li>
@@ -2072,8 +2075,6 @@ The answer is compared to a given tolerance.  Can also accept DNE, oo (Infinity)
 	<dd>A string that will be displayed in front of the input box.  Example: $ansprompt="y="</dd>
 <dt>$displayformat = "alignright" (In Common Control)</dt>
 	<dd>Aligns the text in the answer box to the right side</dd>
-<dt>$displayformat = "point" or "vector" (In Common Control) *deprecated - use ntuple question type instead*</dt>
-	<dd>Used in conjunction with $answerformat = "orderedlist"; surrounds the input box with parens (for point) or angle brackets (for vector).</dd>
 <dt>$answerboxsize = number (In Common Control)</dt>
 	<dd>Determines the number of characters space provided for entry of an answer.  Defaults to 20.</dd>
 <dt>$answerbox (In Question Text)</dt>
@@ -2142,8 +2143,6 @@ A student is asked to enter a number or a calculation, like 2/3, 5^2, or sin(2).
 	where $requiretimes would be applied to the entire list of answers.</dd>
 <dt>$ansprompt = string (In Common Control)</dt>
 	<dd>A string that will be displayed in front of the input box.  Example: $ansprompt="y="</dd>
-<dt>$displayformat = "point" or "vector" (In Common Control) *deprecated - use calculated ntuple question type instead*</dt>
-	<dd>Used in conjunction with $answerformat = "orderedlist"; surrounds the input box with parens (for point) or angle brackets (for vector).</dd>
 <dt>$answerboxsize = number (In Common Control)</dt>
 	<dd>Determines the number of characters space provided for entry of an answer.  Defaults to 20.</dd>
 <dt>$hidepreview = true (In Common Control)</dt>

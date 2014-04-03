@@ -138,6 +138,11 @@ function displayq($qnidx,$qidx,$seed,$doshowans,$showhints,$attemptn,$returnqtxt
 	$toevalqtxt = interpret('qtext',$qdata['qtype'],$qdata['qtext']);
 	$toevalqtxt = str_replace('\\','\\\\',$toevalqtxt);
 	$toevalqtxt = str_replace(array('\\\\n','\\\\"','\\\\$','\\\\{'),array('\\n','\\"','\\$','\\{'),$toevalqtxt);
+	
+	$toevalsoln = interpret('qtext',$qdata['qtype'],$qdata['solution']);
+	$toevalsoln = str_replace('\\','\\\\',$toevalsoln);
+	$toevalsoln = str_replace(array('\\\\n','\\\\"','\\\\$','\\\\{'),array('\\n','\\"','\\$','\\{'),$toevalsoln);
+	
 	//$toevalqtxt = str_replace('"','\\"',$toevalqtxt);
 	//echo "toeval: $toevalqtxt";
 	if ($doshowans) {
@@ -307,6 +312,16 @@ function displayq($qnidx,$qidx,$seed,$doshowans,$showhints,$attemptn,$returnqtxt
 	
 	//echo $toevalqtext;
 	eval("\$evaledqtext = \"$toevalqtxt\";");
+	eval("\$evaledsoln = \"$toevalsoln\";");
+	if ($returnqtxt===2) {
+		return '<div id="writtenexample" class="review">'.$evaledsoln.'</div>';
+	} else if ($returnqtxt===3) {
+		return '<div class="question">'.$evaledqtext.'</div><div id="writtenexample" class="review">'.$evaledsoln.'</div>';
+	}
+	if (($qdata['solutionopts']&1)==0) {
+		$evaledsoln = '<i>'._('This solution is for a similar problem, not your specific version').'</i><br/>'.$evaledsoln;
+	}
+	
 	if (strpos($evaledqtext,'[AB')!==false) {
 		if (is_array($answerbox)) {
 			foreach($answerbox as $iidx=>$abox) {
@@ -363,30 +378,39 @@ function displayq($qnidx,$qidx,$seed,$doshowans,$showhints,$attemptn,$returnqtxt
 	if (isset($helptext) &&  $showhints) {
 		echo '<div><p class="tips">'.filter($helptext).'</p></div>';
 	}
-	if ($showhints && $qdata['extref']!='') {
-		$extref = explode('~~',$qdata['extref']);
+	if ($showhints && ($qdata['extref']!='' || (($qdata['solutionopts']&2)==2 && $qdata['solution']!=''))) {
 		echo '<div><p class="tips">', _('Get help: ');
-		for ($i=0;$i<count($extref);$i++) {
-			$extrefpt = explode('!!',$extref[$i]);
+		if ($qdata['extref']!= '') {
+			$extref = explode('~~',$qdata['extref']);
+		
 			if (isset($GLOBALS['questions']) && (!isset($GLOBALS['sessiondata']['isteacher']) || $GLOBALS['sessiondata']['isteacher']==false) && !isset($GLOBALS['sessiondata']['stuview'])) {
 				$qref = $GLOBALS['questions'][$qnidx].'-'.($qnidx+1);
 			} else {
 				$qref = '';
 			}
-			if ($extrefpt[0]=='video' || strpos($extrefpt[1],'youtube.com/watch')!==false) {
-				$extrefpt[1] = 'http://'. $_SERVER['HTTP_HOST'] . "$imasroot/assessment/watchvid.php?url=".urlencode($extrefpt[1]);
-				if ($extrefpt[0]=='video') {$extrefpt[0]='Video';}
-				echo formpopup($extrefpt[0],$extrefpt[1],660,530,"button",true,"video",$qref);
-			} else if ($extrefpt[0]=='read') {
-				echo formpopup("Read",$extrefpt[1],730,500,"button",true,"text",$qref);
-			} else {
-				echo formpopup($extrefpt[0],$extrefpt[1],730,500,"button",true,"text",$qref);
+			for ($i=0;$i<count($extref);$i++) {
+				$extrefpt = explode('!!',$extref[$i]);
+				if ($extrefpt[0]=='video' || strpos($extrefpt[1],'youtube.com/watch')!==false) {
+					$extrefpt[1] = $urlmode . $_SERVER['HTTP_HOST'] . "$imasroot/assessment/watchvid.php?url=".urlencode($extrefpt[1]);
+					if ($extrefpt[0]=='video') {$extrefpt[0]='Video';}
+					echo formpopup($extrefpt[0],$extrefpt[1],660,530,"button",true,"video",$qref);
+				} else if ($extrefpt[0]=='read') {
+					echo formpopup("Read",$extrefpt[1],730,500,"button",true,"text",$qref);
+				} else {
+					echo formpopup($extrefpt[0],$extrefpt[1],730,500,"button",true,"text",$qref);
+				}
 			}
+		}
+		if (($qdata['solutionopts']&2)==2 && $qdata['solution']!='') {
+			$addr = $urlmode. $_SERVER['HTTP_HOST'] . "$imasroot/assessment/showsoln.php?id=".$qidx.'&sig='.md5($qidx.$GLOBALS['sessiondata']['secsalt']);
+			$addr .= '&t='.($qdata['solutionopts']&1).'&cid='.$GLOBALS['cid'];
+			echo formpopup("Written Example",$addr,730,500,"button",true,"soln",$qref);	
 		}
 		echo '</p></div>';
 	}
 	
 	echo "<div>";
+	
 	foreach($tips as $iidx=>$tip) {
 		if ((!isset($hidetips) || (is_array($hidetips) && !isset($hidetips[$iidx])))&& !$seqinactive && $showtips>0) {
 			echo "<p class=\"tips\" ";
@@ -405,7 +429,7 @@ function displayq($qnidx,$qidx,$seed,$doshowans,$showhints,$attemptn,$returnqtxt
 				if ($nosabutton) {
 					echo filter("<div>" .  _('Answer:') . " {$showanswer[$iidx]} </div>\n");
 				} else {
-					echo "<div><input class=\"sabtn\" type=button value=\"Show Answer\" onClick='javascript:document.getElementById(\"ans$qnidx-$iidx\").className=\"shown\";' />";// AMprocessNode(document.getElementById(\"ans$qnidx-$iidx\"));'>";
+					echo "<div><input class=\"sabtn\" type=button value=\""._('Show Answer')."\" onClick='javascript:document.getElementById(\"ans$qnidx-$iidx\").className=\"shown\";' />";// AMprocessNode(document.getElementById(\"ans$qnidx-$iidx\"));'>";
 					echo filter(" <span id=\"ans$qnidx-$iidx\" class=\"hidden\">{$showanswer[$iidx]}</span></div>\n");
 				}
 			}
@@ -417,8 +441,16 @@ function displayq($qnidx,$qidx,$seed,$doshowans,$showhints,$attemptn,$returnqtxt
 		if ($nosabutton) {
 			echo filter("<div>" . _('Answer:') . " $showanswer </div>\n");	
 		} else {
-			echo "<div><input class=\"sabtn\" type=button value=\"Show Answer\" onClick='javascript:document.getElementById(\"ans$qnidx\").className=\"shown\"; rendermathnode(document.getElementById(\"ans$qnidx\"));' />";
+			echo "<div><input class=\"sabtn\" type=button value=\""._('Show Answer')."\" onClick='javascript:document.getElementById(\"ans$qnidx\").className=\"shown\"; rendermathnode(document.getElementById(\"ans$qnidx\"));' />";
 			echo filter(" <span id=\"ans$qnidx\" class=\"hidden\">$showanswer </span></div>\n");
+		}
+	}
+	if ($doshowans && ($qdata['solutionopts']&4)==4 && $qdata['solution']!='') {
+		if ($nosabutton) {
+			echo filter("<div><p>" . _('Detailed Solution').'</p>'. $evaledsoln .'</div>');
+		} else {
+			echo "<div><input class=\"sabtn\" type=button value=\""._('Show Detailed Solution')."\" onClick='javascript:$(\"#soln$qnidx\").removeClass(\"hidden\"); rendermathnode(document.getElementById(\"soln$qnidx\"));' />";
+			echo filter(" <div id=\"soln$qnidx\" class=\"hidden review\" style=\"margin-top:5px;margin-bottom:5px;\">$evaledsoln </div></div>\n");
 		}
 	}
 	echo "</div>\n";
@@ -1050,11 +1082,11 @@ function makeanswerbox($anstype, $qn, $la, $options,$multi,$colorbox='') {
 			}
 		}
 		if ($displayformat == "horiz") {
-			$out .= "<div class=spacer>&nbsp;</div>\n";
+			//$out .= "<div class=spacer>&nbsp;</div>\n";
 		} else if ($displayformat == "inline") {
 			
 		} else if ($displayformat == 'column') {
-			$out .= "</ul></div><div class=spacer>&nbsp;</div>\n";
+			$out .= "</ul></div>";//<div class=spacer>&nbsp;</div>\n";
 		} else {
 			$out .= "</ul>\n";
 		}
@@ -1908,8 +1940,14 @@ function makeanswerbox($anstype, $qn, $la, $options,$multi,$colorbox='') {
 			$shorttip = _('Enter an interval using inequalities');
 		} else {
 			$tip = _('Enter your answer using interval notation.  Example: [2.1,5.6)') . " <br/>";
-			$tip .= _('Use U for union to combine intervals.  Example: (-oo,2] U [4,oo)') . "<br/>";
-			$shorttip = _('Enter an interval using interval notation');
+			if (in_array('list',$ansformats)) {
+				$tip .= _('Separate intervals by a comma.  Example: (-oo,2],[4,oo)') . "<br/>";
+				$shorttip = _('Enter a list of intervals using interval notation');
+			} else {
+				$tip .= _('Use U for union to combine intervals.  Example: (-oo,2] U [4,oo)') . "<br/>";
+				$shorttip = _('Enter an interval using interval notation');
+			}
+			
 		}
 		//$tip .= "Enter values as numbers (like 5, -3, 2.2) or as calculations (like 5/3, 2^3, 5+4)<br/>";
 		//$tip .= "Enter DNE for an empty set, oo for Infinity";
@@ -3637,7 +3675,11 @@ function scorepart($anstype,$qn,$givenans,$options,$multi) {
 					}
 				}
 			} else {
-				$orarr = explode('U',$_POST["tc$qn"]);
+				if (in_array('list',$ansformats)) {
+					$orarr = preg_split('/(?<=[\)\]]),(?=[\(\[])/',$_POST["tc$qn"]);
+				} else {
+					$orarr = explode('U',$_POST["tc$qn"]);
+				}
 				foreach ($orarr as $opt) {
 					$opt = trim($opt);
 					$opts = explode(',',substr($opt,1,strlen($opt)-2));
@@ -3666,8 +3708,13 @@ function scorepart($anstype,$qn,$givenans,$options,$multi) {
 					continue;
 				}
 			}
-			$aarr = explode('U',$anans);
-			$gaarr = explode('U',$givenans);
+			if (in_array('list',$ansformats)) {
+				$aarr = preg_split('/(?<=[\)\]]),(?=[\(\[])/',$anans);
+				$gaarr = preg_split('/(?<=[\)\]]),(?=[\(\[])/',$givenans);
+			} else {
+				$aarr = explode('U',$anans);
+				$gaarr = explode('U',$givenans);
+			}
 			if (count($aarr)!=count($gaarr)) {
 				continue;
 			}

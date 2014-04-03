@@ -6,6 +6,11 @@ require("./config.php");
 header('P3P: CP="ALL CUR ADM OUR"');
 $public = '?public=true';
 $publica = '&public=true';
+if((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO']=='https'))  {
+ 	 $urlmode = 'https://';
+ } else {
+ 	 $urlmode = 'http://';
+ }
 
 require("./assessment/displayq2.php");
 
@@ -79,6 +84,7 @@ if ($showans) {
 	$doshowans = 0;
 	echo "<form id=\"qform\" method=\"post\" enctype=\"multipart/form-data\" action=\"$page_formAction\" onsubmit=\"doonsubmit()\">\n";
 	echo "<input type=\"hidden\" name=\"seed\" value=\"$seed\" />";
+	$lastanswers = array();
 	displayq(0,$qsetid,$seed,$doshowans,true,0);
 	echo "<input type=submit name=\"check\" value=\"" . _('Check Answer') . "\">\n";
 	echo "</form>\n";
