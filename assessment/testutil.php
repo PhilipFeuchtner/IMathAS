@@ -30,7 +30,7 @@ function getquestioninfo($qns,$testsettings) {
 	  $STM->execute($PDOParam) or die("Query failed : " . $DBH->errorInfo());
 		
 	  // while ($row = mysql_fetch_row($result)) {
-	  while ($row = STM->fetch(PDO::FETCH_NUM)) {
+	  while ($row = $STM->fetch(PDO::FETCH_NUM)) {
 	    // ------------------------------------------------------------------------------
 			$outcomenames[$row[0]] = $row[1];
 		}
@@ -59,7 +59,7 @@ function getquestioninfo($qns,$testsettings) {
 	$STM->execute($PDOParam) or die("Query failed : " . $DBH->errorInfo());
 		
 	// while ($line = mysql_fetch_array($result, MYSQL_ASSOC)) {
-	while ($line = STM->fetch(PDO::FETCH_ASSOC)) {
+	while ($line = $STM->fetch(PDO::FETCH_ASSOC)) {
 	  // ------------------------------------------------------------------------------
 		if (is_numeric($line['category'])) {
 			if ($testsettings['defoutcome']!=0) {
