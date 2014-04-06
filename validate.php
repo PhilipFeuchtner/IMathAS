@@ -283,20 +283,20 @@ END;
 
 		// DEBUG PDO SELECT#3 & INSERT#02 -----------------------------------------------
 
-		PDOParam = array();
+		$PDOParam = array();
 		
 		$query = "SELECT id FROM imas_courses WHERE (istemplate&8)=8 AND available<4";
 		// if (isset($_GET['cid'])) { $query.= ' AND id='.intval($_GET['cid']); }
 		if (isset($_GET['cid'])) {
 		  $query.= ' AND id=?';
-		  PDOParam[] = stripslashes(intval($_GET['cid']));
+		  $PDOParam[] = stripslashes(intval($_GET['cid']));
 		}
 		
 		// $result = mysql_query($query) or die("Query failed : " . mysql_error());
 		$STM = $DBH->prepare($query);
 		$STM->execute($PDOParam) or die("Query failed : " . $DBH->errorInfo());
 
-		while ($row = STM->fetch(PDO::FETCH_NUM)) {
+		while ($row = $STM->fetch(PDO::FETCH_NUM)) {
 	
 		  // if (mysql_num_rows($result)>0) {
 		  //	$query = "INSERT INTO imas_students (userid,courseid) VALUES ";
@@ -413,7 +413,7 @@ END;
 		 }
 		 // $result = mysql_query($query) or die("Query failed : " . mysql_error());
 		 $STM = $DBH->prepare($query);
-		 $STM->execute(array($PDOParam) or die("Query failed : " . $DBH->errorInfo());
+		 $STM->execute(array($PDOParam)) or die("Query failed : " . $DBH->errorInfo());
 		 // ------------------------------------------------------------------------------
 		 
 		 // DEBUG PDO UPDATE#03 ----------------------------------------------------------
