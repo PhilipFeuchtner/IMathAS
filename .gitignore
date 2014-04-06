@@ -2,3 +2,8 @@
 # tempfiles
 \#*#
 *~
+
+# textfiles
+*tex
+*pdf
+
