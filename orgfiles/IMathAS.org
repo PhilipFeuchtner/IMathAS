@@ -168,10 +168,10 @@
 
 ** assessment/ -- associated --
 
-** TODO [0/3] QA 
-  - [ ] 'fetch-lazy' :: validieren
-  - [ ] 'fetch-named' :: validieren
-  - [ ] 'fetch-column' :: validieren
+** TODO [3/3] QA 
+  - [X] 'fetch-lazy' :: validieren
+  - [X] 'fetch-named' :: validieren
+  - [X] 'fetch-column' :: validieren
 * DONE [#A] misc [1/1]
   CLOSED: [2014-03-21 Fri 16:19] SCHEDULED: <2014-03-21 Fri>
   - [X] DebugPDO.php :: PDODumpArrayAsTable
