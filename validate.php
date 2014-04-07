@@ -249,7 +249,7 @@ END;
 
 	   $STM = $DBH->prepare("SELECT ver FROM imas_dbschema WHERE id=2");
 	   $STM->execute() or die("Query failed : " . $DBH->errorInfo());
-	   $result = $STM->fetch(PDO::FETCH_LAZY);
+	   $result = $STM->fetch(PDO::FETCH_ASSOC);
 	   $guestcnt = $result["ver"];
 	   
 	   // ------------------------------------------------------------------------------
