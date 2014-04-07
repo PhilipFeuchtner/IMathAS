@@ -166,8 +166,7 @@
    - [X] not entries
    - [X] no includes
 
-** assessment/ -- associated --
-
+   
 ** TODO [3/3] QA 
   - [X] 'fetch-lazy' :: validieren
   - [X] 'fetch-named' :: validieren
